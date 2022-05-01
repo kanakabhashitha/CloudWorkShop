@@ -1,0 +1,45 @@
+*,
+::after,
+::before {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.container {
+    width: 90vw;
+    margin: 0 auto;
+    max-width: 1170px;
+    text-align: center;
+    margin-top: 2rem;
+  }
+
+.btn {
+    display: inline-block;
+    background: hsl(205, 78%, 60%);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.25rem;;
+    border-color: transparent;
+    text-transform: capitalize;
+    font-size: 1rem;
+    letter-spacing: 0.1rem;
+    margin-top: 2rem;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s linear;
+  }
+
+  .btn:hover {
+    background: hsl(205, 86%, 17%);
+    color: hsl(205, 78%, 60%);
+  }
+
+  h1{
+      margin-bottom: 1rem;
+      text-transform: capitalize;
+      color: hsl(210, 22%, 49%);
+  }
+
+  
