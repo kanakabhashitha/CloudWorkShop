@@ -12,6 +12,7 @@
     max-width: 1170px;
     text-align: center;
     margin-top: 2rem;
+  
   }
 
 .btn {
@@ -29,6 +30,7 @@
     margin-right: 0.5rem;
     cursor: pointer;
     transition: all 0.3s linear;
+    
   }
 
   .btn:hover {
@@ -42,4 +44,16 @@
       color: hsl(210, 22%, 49%);
   }
 
-  
+  table, th, td {
+    border: 0.5px solid hsl(205, 78%, 60%);;
+    border-collapse: collapse;
+    padding: 10px;
+    color: hsl(205, 78%, 60%);;
+    font-weight: 600;
+  }
+
+  table{
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 3rem;
+  }

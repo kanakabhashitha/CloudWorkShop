@@ -1,6 +1,12 @@
+import io
+import os
+
 from flask import Flask, request, render_template
 
+
 app = Flask(__name__, template_folder='template')
+
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "cloud-work-shop-cf633c35db2b.json"
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -10,29 +16,32 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/speech', methods=['GET', 'POST'])
-def speech():
-    transcript = ""
+@app.route('/visionApi', methods=['GET', 'POST'])
+def visionApi():
+    from google.cloud import vision
 
-    from google.cloud import speech
+    image_uri = 'gs://cloud-work-shop/cloudTestImg.jpg'
 
-    client = speech.SpeechClient()
+    client = vision.ImageAnnotatorClient()
+    image = vision.Image()
+    image.source.image_uri = image_uri
 
-    gcs_uri = "gs://cloud-samples-data/speech/brooklyn_bridge.raw"
+    response = client.label_detection(image=image)
 
-    audio = speech.RecognitionAudio(uri=gcs_uri)
+    print('Labels (and confidence score):')
+    # print('=' * 30)
 
-    config = speech.RecognitionConfig(
-        encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-        sample_rate_hertz=16000,
-        language_code="en-US",
-    )
+    labels = response.label_annotations
+    labelName = []
+    labelScore = []
 
-    response = client.recognize(config=config, audio=audio)
+    for label in labels:
+        resultV = label.description
+        labelName.append(resultV)
+        resultS = '%.2f%%' % (label.score*100.)
+        labelScore.append(resultS)
 
-    for result in response.results:
-        transcript = format(result.alternatives[0].transcript)
-        return render_template('index.html', transcript=transcript)
+    return render_template('index.html', labelName=labelName, labelScore=labelScore)
 
 
 if __name__ == "__main__":
