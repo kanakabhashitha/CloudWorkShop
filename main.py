@@ -1,3 +1,4 @@
+from pkgutil import iter_modules
 import sys
 import os
 
@@ -73,63 +74,78 @@ def objectDetection():
 def callCatDog():
 
     from google.cloud import storage
+    from google.cloud import vision
 
-    bucketItems = []
-    imageUri = []
     catImg = []
     dogImg = []
 
-    def list_blobs(bucket_name):
+    bucket_name = "cloud_work_shop"
 
-        storage_client = storage.Client()
+    storage_client = storage.Client()
 
-        blobs = storage_client.list_blobs(bucket_name)
+    blobs = storage_client.list_blobs(bucket_name)
 
-        for blob in blobs:
-            bucketItems.append(blob.name)
+    for blob in blobs:
+        imageUri = ("gs://cloud_work_shop/"+blob.name)
 
-    list_blobs(bucket_name="cloud_work_shop")
-
-    def createImageUri(bucketItems):
-
-        for item in bucketItems:
-            imageUri.append("gs://cloud_work_shop/"+item)
-
-    createImageUri(bucketItems)
-
-    def objectDetected(imageUri):
-
-        from google.cloud import vision
         client = vision.ImageAnnotatorClient()
         image = vision.Image()
 
-        for uri in imageUri:
-            image.source.image_uri = uri
-            objects = client.object_localization(
-                image=image).localized_object_annotations
+        image.source.image_uri = imageUri
+        objects = client.object_localization(
+            image=image).localized_object_annotations
 
-            # print('Number of objects found: {}'.format(len(objects)))
-            len(objects)
+        len(objects)
 
-            for object_ in objects:
-                # print('\n{} (confidence: {})'.format(
-                #     object_.name, object_.score))
+        for object_ in objects:
 
-                if object_.name == "Cat" and object_.score > 0.80:
-                    catImg.append('name: {} , confidence: {}'.format(
-                        object_.name, '%.2f%%' % (object_.score*100.)))
+            if object_.name == "Cat" and object_.score > 0.80:
+                catImg.append('Img Name: {} , Confidence: {}'.format(
+                    blob.name, '%.2f%%' % (object_.score*100.)))
 
-                    # print(catImg)
-
-                if object_.name == "Dog" and object_.score > 0.80:
-                    dogImg.append('name: {} , confidence: {}'.format(
-                        object_.name, '%.2f%%' % (object_.score*100.)))
-
-                    # print(dogImg)
-
-    objectDetected(imageUri)
+            if object_.name == "Dog" and object_.score > 0.80:
+                dogImg.append('Img Name: {} , Confidence: {}'.format(
+                    blob.name, '%.2f%%' % (object_.score*100.)))
 
     return render_template('cat-and-dog.html', catImg=catImg, dogImg=dogImg)
+
+
+@app.route('/callCatDogImgGallery', methods=['GET', 'POST'])
+def callCatDogImgGallery():
+
+    from google.cloud import storage
+    from google.cloud import vision
+
+    catImgUri = []
+    dogImgUri = []
+
+    bucket_name = "cloud_work_shop"
+    storage_client = storage.Client()
+    blobs = storage_client.list_blobs(bucket_name)
+
+    for blob in blobs:
+        imageUri = ("gs://cloud_work_shop/"+blob.name)
+        publicImgUri = (
+            'https://storage.googleapis.com/cloud_work_shop/'+blob.name)
+
+        client = vision.ImageAnnotatorClient()
+        image = vision.Image()
+
+        image.source.image_uri = imageUri
+        objects = client.object_localization(
+            image=image).localized_object_annotations
+
+        len(objects)
+
+        for object_ in objects:
+
+            if object_.name == "Cat" and object_.score > 0.80:
+                catImgUri.append(publicImgUri)
+
+            if object_.name == "Dog" and object_.score > 0.80:
+                dogImgUri.append(publicImgUri)
+
+    return render_template('cat-and-dog-img-gallery.html', catImgUri=catImgUri, dogImgUri=dogImgUri)
 
 
 if __name__ == "__main__":

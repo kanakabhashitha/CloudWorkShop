@@ -1,1 +1,1 @@
-labelName
+catImgUri
