@@ -1,13 +1,17 @@
+from fileinput import filename
 from pkgutil import iter_modules
+from queue import Empty
 import sys
 import os
+import io
 
-from flask import Flask, request, render_template
-
+from flask import Flask, flash, redirect, request, render_template
+from google.cloud import storage
+from google.cloud import vision
 
 app = Flask(__name__, template_folder='template')
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "cloud-work-shop-4890a82c4681.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "cloud-work-shop-36f89627d5a8.json"
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -19,7 +23,6 @@ def index():
 
 @app.route('/visionApi', methods=['GET', 'POST'])
 def visionApi():
-    from google.cloud import vision
 
     image_uri = 'gs://cloud_work_shop/cloudTestImg.jpg'
 
@@ -47,7 +50,6 @@ def visionApi():
 
 @app.route('/object-detection', methods=['GET', 'POST'])
 def objectDetection():
-    from google.cloud import vision
 
     image_uri = 'gs://cloud_work_shop/cloudTestImg.jpg'
 
@@ -72,9 +74,6 @@ def objectDetection():
 
 @app.route('/callCatDog', methods=['GET', 'POST'])
 def callCatDog():
-
-    from google.cloud import storage
-    from google.cloud import vision
 
     catImg = []
     dogImg = []
@@ -113,9 +112,6 @@ def callCatDog():
 @app.route('/callCatDogImgGallery', methods=['GET', 'POST'])
 def callCatDogImgGallery():
 
-    from google.cloud import storage
-    from google.cloud import vision
-
     catImgUri = []
     dogImgUri = []
 
@@ -146,6 +142,62 @@ def callCatDogImgGallery():
                 dogImgUri.append(publicImgUri)
 
     return render_template('cat-and-dog-img-gallery.html', catImgUri=catImgUri, dogImgUri=dogImgUri)
+
+
+@app.route('/detect-Web-entities', methods=['GET', 'POST'])
+def detectWebEntities():
+
+    return render_template('detect-web-entities.html')
+
+
+@app.route('/upload-image', methods=['GET', 'POST'])
+def uploadImage():
+
+    if request.method == 'POST':
+
+        objectName = []
+        isEmpty = False
+        publicImgUri = ''
+
+        if 'file' not in request.files:
+            return redirect(request.url)
+
+        file = request.files['file']
+
+        if file == '':
+            return redirect(request.url)
+
+        if file:
+
+            print(file)
+
+            storage_client = storage.Client()
+            bucket = storage_client.bucket("cloud_work_shop")
+            filename = '%s/%s' % ('img', file.filename)
+
+            blob = bucket.blob(filename, chunk_size=262144 * 5)
+            blob.upload_from_file(file, file.content_type)
+
+            image_uri = ('gs://cloud_work_shop/img/'+file.filename)
+            publicImgUri = (
+                "https://storage.googleapis.com/cloud_work_shop/img/"+file.filename)
+
+            client = vision.ImageAnnotatorClient()
+            image = vision.Image()
+            image.source.image_uri = image_uri
+
+            response = client.web_detection(image=image)
+            annotations = response.web_detection
+
+            if annotations.pages_with_matching_images:
+
+                for page in annotations.pages_with_matching_images:
+                    objectName.append(format(page.url))
+
+            else:
+                isEmpty = True
+
+        return render_template('detect-web-entities.html', objectName=objectName, isEmpty=isEmpty, publicImgUri=publicImgUri)
 
 
 if __name__ == "__main__":
